@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function Login() {
   const router = useRouter();
@@ -24,11 +26,9 @@ export default function Login() {
       
       if (!res.ok) throw new Error(data.error || 'Login failed');
       
-      // Store token in localStorage
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      // Redirect to dashboard
       router.push('/dashboard');
     } catch (err) {
       setError(err.message);
@@ -36,57 +36,56 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-6 text-center">Login to Studi-a</h1>
-        
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-lg shadow-lg border border-border">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
+          <p className="text-sm text-muted-foreground">Enter your credentials to access your account</p>
+        </div>
+
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="p-3 text-sm bg-destructive/15 border border-destructive/30 rounded-md text-destructive">
             {error}
           </div>
         )}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Email
             </label>
-            <input
+            <Input
               type="email"
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+              placeholder="m@example.com"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
             />
           </div>
-          
-          <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Password
             </label>
-            <input
+            <Input
               type="password"
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
             />
           </div>
-          
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none"
-          >
-            Login
-          </button>
+
+          <Button type="submit" className="w-full">
+            Sign in
+          </Button>
         </form>
-        
-        <p className="mt-4 text-center text-sm">
-          Don't have an account?{' '}
-          <Link href="/register" className="text-blue-500 hover:text-blue-600">
-            Register here
+
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">Don't have an account? </span>
+          <Link href="/register" className="font-medium text-primary hover:text-primary/90">
+            Sign up
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   );
