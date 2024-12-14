@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, RotateCcw, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import styles from './styles.module.css';
 
 export default function FlashcardsPage() {
   const router = useRouter();
   const params = useParams();
   const [flashcards, setFlashcards] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showingFront, setShowingFront] = useState(true);
+  const [isFlipped, setIsFlipped] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [slideDirection, setSlideDirection] = useState('');
 
   useEffect(() => {
     if (params?.id) {
@@ -59,28 +60,54 @@ export default function FlashcardsPage() {
 
   const handleNext = () => {
     if (currentIndex < flashcards.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      setShowingFront(true);
+      setSlideDirection('right');
+      setIsFlipped(false);
+      setTimeout(() => {
+        setCurrentIndex(prev => prev + 1);
+        setSlideDirection('');
+      }, 300);
     }
   };
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setShowingFront(true);
+      setSlideDirection('left');
+      setIsFlipped(false);
+      setTimeout(() => {
+        setCurrentIndex(prev => prev - 1);
+        setSlideDirection('');
+      }, 300);
     }
   };
 
   const handleFlip = () => {
-    setShowingFront(prev => !prev);
+    setIsFlipped(prev => !prev);
   };
+
+  const handleKeyPress = (event) => {
+    if (event.key === 'ArrowRight') {
+      handleNext();
+    } else if (event.key === 'ArrowLeft') {
+      handlePrevious();
+    } else if (event.key === ' ') {
+      handleFlip();
+      event.preventDefault();
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [currentIndex, flashcards.length]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading flashcards...</p>
+      <div className={styles.container}>
+        <div className={styles.loadingWrapper}>
+          <Loader2 className={styles.loadingIcon} />
+          <p>Loading flashcards...</p>
         </div>
       </div>
     );
@@ -88,11 +115,11 @@ export default function FlashcardsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Error</h1>
-          <p className="text-muted-foreground mb-6">{error}</p>
-          <div className="flex justify-center gap-4">
+      <div className={styles.container}>
+        <div className={styles.errorWrapper}>
+          <h1>Error</h1>
+          <p>{error}</p>
+          <div className={styles.buttonGroup}>
             <Button onClick={() => router.back()}>Go Back</Button>
             <Button variant="outline" onClick={fetchFlashcards}>
               Try Again
@@ -105,10 +132,10 @@ export default function FlashcardsPage() {
 
   if (!flashcards.length) {
     return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">No Flashcards Found</h1>
-          <p className="text-muted-foreground mb-6">This note doesn't have any flashcards yet.</p>
+      <div className={styles.container}>
+        <div className={styles.emptyWrapper}>
+          <h1>No Flashcards Found</h1>
+          <p>This note doesn't have any flashcards yet.</p>
           <Button onClick={() => router.back()}>Go Back</Button>
         </div>
       </div>
@@ -116,45 +143,81 @@ export default function FlashcardsPage() {
   }
 
   const currentCard = flashcards[currentIndex];
+  const progress = ((currentIndex + 1) / flashcards.length) * 100;
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <p className="text-sm text-muted-foreground">
+    <div className={styles.container}>
+      <div className={styles.content}>
+        {/* Header */}
+        <div className={styles.header}>
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className={styles.backButton}
+          >
+            <ArrowLeft className={styles.icon} />
+            Back to Note
+          </Button>
+          <div className={styles.counter}>
             Card {currentIndex + 1} of {flashcards.length}
-          </p>
+          </div>
         </div>
 
-        <Card 
-          className="min-h-[300px] flex items-center justify-center p-8 mb-8 cursor-pointer transition-all duration-300 hover:shadow-lg"
-          onClick={handleFlip}
-        >
-          <div className="text-center">
-            <p className="text-lg font-medium">
-              {showingFront ? currentCard.front : currentCard.back}
-            </p>
-            <p className="text-sm text-muted-foreground mt-4">
-              Click to {showingFront ? 'see answer' : 'hide answer'}
-            </p>
-          </div>
-        </Card>
+        {/* Progress bar */}
+        <div className={styles.progressWrapper}>
+          <div 
+            className={styles.progressBar}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
 
-        <div className="flex justify-center items-center gap-4">
+        {/* Flashcard */}
+        <div className={styles.scene}>
+          <div 
+            className={`${styles.card} ${isFlipped ? styles.isFlipped : ''}`}
+            onClick={handleFlip}
+          >
+            <div className={styles.cardFront}>
+              <div className={styles.cardContent}>
+                <div className={styles.questionText}>
+                  {currentCard.front}
+                </div>
+                <div className={styles.hintText}>
+                  Click to flip
+                </div>
+              </div>
+            </div>
+            <div className={styles.cardBack}>
+              <div className={styles.cardContent}>
+                <div className={styles.answerText}>
+                  {currentCard.back}
+                </div>
+                <div className={styles.hintText}>
+                  Click to flip back
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className={styles.controls}>
           <Button
             variant="outline"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
+            className={styles.navButton}
           >
-            <ChevronLeft className="h-4 w-4 mr-2" />
+            <ChevronLeft className={styles.icon} />
             Previous
           </Button>
 
           <Button
             variant="outline"
             onClick={handleFlip}
+            className={styles.flipButton}
           >
-            <RotateCcw className="h-4 w-4 mr-2" />
+            <RotateCcw className={styles.icon} />
             Flip
           </Button>
 
@@ -162,10 +225,16 @@ export default function FlashcardsPage() {
             variant="outline"
             onClick={handleNext}
             disabled={currentIndex === flashcards.length - 1}
+            className={styles.navButton}
           >
             Next
-            <ChevronRight className="h-4 w-4 ml-2" />
+            <ChevronRight className={styles.icon} />
           </Button>
+        </div>
+
+        {/* Keyboard shortcuts */}
+        <div className={styles.shortcuts}>
+          <p>Keyboard shortcuts: ← Previous | Space Flip | → Next</p>
         </div>
       </div>
     </div>
