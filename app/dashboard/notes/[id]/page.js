@@ -7,13 +7,47 @@ import { Button } from '@/components/ui/button';
 import 'katex/dist/katex.min.css';
 import katex from 'katex';
 
+function formatContent(text) {
+  // First, clean up any literal \n characters and replace with actual newlines
+  text = text.replace(/\\n/g, '\n');
+  
+  // Clean up multiple newlines to just double newlines
+  text = text.replace(/\n{3,}/g, '\n\n');
+  
+  // Format headings
+  text = text.replace(/\*\*(.*?):\*\*/g, (match, title) => {
+    return `<h2 class="text-2xl font-semibold mb-4">${title.trim()}</h2>`;
+  });
+  
+  // Format list items
+  text = text.replace(/- \*\*(.*?):\*\*/g, (match, content) => {
+    return `<div class="flex gap-2 mb-2"><span>•</span><span><strong>${content.trim()}</strong>:</span></div>`;
+  });
+  
+  // Format mathematical expressions
+  text = text.replace(/\b([a-z])2\b/g, '$1²');
+  text = text.replace(/\b([a-z])([2-9])\b/g, '$1^$2');
+  
+  // Split into paragraphs and wrap each in a div
+  const paragraphs = text.split('\n\n').filter(p => p.trim());
+  
+  // Apply KaTeX rendering to each paragraph
+  return paragraphs.map(p => {
+    const rendered = renderMath(p.trim());
+    return `<div class="mb-4">${rendered}</div>`;
+  }).join('');
+}
+
 function renderMath(text) {
   let result = text;
   
   // Replace display math ($$...$$)
   result = result.replace(/\$\$(.*?)\$\$/g, (match, formula) => {
     try {
-      return katex.renderToString(formula, { displayMode: true });
+      return katex.renderToString(formula.trim(), { 
+        displayMode: true,
+        throwOnError: false
+      });
     } catch (error) {
       console.error('KaTeX error:', error);
       return match;
@@ -23,7 +57,10 @@ function renderMath(text) {
   // Replace inline math ($...$)
   result = result.replace(/\$(.*?)\$/g, (match, formula) => {
     try {
-      return katex.renderToString(formula, { displayMode: false });
+      return katex.renderToString(formula.trim(), { 
+        displayMode: false,
+        throwOnError: false
+      });
     } catch (error) {
       console.error('KaTeX error:', error);
       return match;
@@ -185,9 +222,7 @@ export default function NotePage() {
                 <div 
                   className="prose prose-invert max-w-none"
                   dangerouslySetInnerHTML={{ 
-                    __html: chapter.content.split('\n').map(paragraph => 
-                      `<p class="text-muted-foreground">${renderMath(paragraph)}</p>`
-                    ).join('')
+                    __html: formatContent(chapter.content)
                   }}
                 />
               </div>
@@ -197,4 +232,4 @@ export default function NotePage() {
       </div>
     </div>
   );
-} 
+}
