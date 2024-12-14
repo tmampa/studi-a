@@ -10,12 +10,12 @@ import katex from 'katex';
 function formatContent(text) {
   text = text.replace(/\\n/g, '\n').replace(/\n{3,}/g, '\n\n');
   
-  // Format headings with smaller size
+  // Format headings
   text = text.replace(/\*\*(.*?):\*\*/g, (match, title) => {
     return `<h2 class="text-lg font-semibold text-white mb-4 mt-6 border-b border-gray-700 pb-2">${title.trim()}</h2>`;
   });
   
-  // Format list items with smaller text
+  // Format list items
   text = text.replace(/- \*\*(.*?):\*\*/g, (match, content) => {
     return `<div class="flex gap-2 mb-2 items-baseline text-sm">
       <span class="text-blue-400">•</span>
@@ -23,6 +23,11 @@ function formatContent(text) {
         <strong class="text-white">${content.trim()}</strong>:
       </div>
     </div>`;
+  });
+  
+  // Format remaining bold text (not headings or list items)
+  text = text.replace(/\*\*(.*?)\*\*/g, (match, content) => {
+    return `<strong class="text-white">${content.trim()}</strong>`;
   });
   
   // Format mathematical expressions
