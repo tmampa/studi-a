@@ -3,6 +3,9 @@
   padding: 2rem;
   background-color: rgb(2 6 23) !important;
   color: white;
+  background-image: 
+    radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 0% 100%, rgba(14, 165, 233, 0.08) 0%, transparent 40%);
 }
 
 .content {
@@ -11,7 +14,7 @@
 }
 
 .scene {
-  perspective: 1000px;
+  perspective: 1500px;
   margin: 2rem auto;
   width: 600px;
   height: 400px;
@@ -23,11 +26,19 @@
   height: 100%;
   cursor: pointer;
   transform-style: preserve-3d;
-  transition: transform 0.6s;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  transform: translateY(-5px) scale(1.02);
 }
 
 .card.isFlipped {
   transform: rotateY(180deg);
+}
+
+.card.isFlipped:hover {
+  transform: rotateY(180deg) translateY(-5px) scale(1.02);
 }
 
 .cardFront,
@@ -37,57 +48,88 @@
   height: 100%;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border-radius: 16px;
+  padding: 2.5rem;
+  background-clip: padding-box;
 }
 
 /* Front of card (Question) */
 .cardFront {
-  background: rgb(15 23 42);
-  border-left: 5px solid #3b82f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgb(51 65 85);
+  background: linear-gradient(145deg, rgb(15 23 42) 0%, rgb(30 41 59) 100%);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  box-shadow: 
+    0 10px 30px -5px rgba(2, 6, 23, 0.5),
+    0 0 5px rgba(59, 130, 246, 0.2),
+    inset 0 0 0 1px rgba(59, 130, 246, 0.1);
+  overflow: hidden;
 }
 
 .cardFront::before {
   content: "?";
   position: absolute;
-  top: 20px;
-  left: 20px;
-  font-size: 24px;
+  top: 1.5rem;
+  left: 1.5rem;
+  font-size: 2.5rem;
+  font-family: Georgia, serif;
   color: #3b82f6;
-  opacity: 0.3;
+  opacity: 0.15;
+  text-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+}
+
+.cardFront::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  opacity: 0.8;
 }
 
 /* Back of card (Answer) */
 .cardBack {
-  background: rgb(30 41 59);
+  background: linear-gradient(145deg, rgb(30 41 59) 0%, rgb(44 55 73) 100%);
   transform: rotateY(180deg);
-  border-right: 5px solid #0ea5e9;
-  border: 1px solid rgb(71 85 105);
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  box-shadow: 
+    0 10px 30px -5px rgba(2, 6, 23, 0.5),
+    0 0 5px rgba(14, 165, 233, 0.2),
+    inset 0 0 0 1px rgba(14, 165, 233, 0.1);
   background-image: 
     repeating-linear-gradient(
       0deg,
       transparent,
       transparent 29px,
-      rgba(148, 163, 184, 0.1) 29px,
-      rgba(148, 163, 184, 0.1) 30px
+      rgba(148, 163, 184, 0.07) 29px,
+      rgba(148, 163, 184, 0.07) 30px
     );
   background-size: 100% 30px;
   line-height: 30px;
+  overflow: hidden;
 }
 
 .cardBack::before {
   content: "!";
   position: absolute;
-  top: 20px;
-  right: 20px;
-  font-size: 24px;
+  top: 1.5rem;
+  right: 1.5rem;
+  font-size: 2.5rem;
+  font-family: Georgia, serif;
   color: #0ea5e9;
-  opacity: 0.3;
+  opacity: 0.15;
+  text-shadow: 0 2px 10px rgba(14, 165, 233, 0.3);
+}
+
+.cardBack::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+  opacity: 0.8;
 }
 
 .cardContent {
@@ -97,68 +139,84 @@
   justify-content: center;
   align-items: center;
   text-align: center;
+  padding: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .questionText {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 600;
   color: rgb(226 232 240);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  line-height: 1.4;
+  max-width: 90%;
 }
 
 .answerText {
   font-size: 1.5rem;
   font-weight: 500;
   color: rgb(226 232 240);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  line-height: 1.6;
+  max-width: 90%;
 }
 
 .hintText {
   position: absolute;
-  bottom: 1rem;
+  bottom: 1.25rem;
   left: 0;
   right: 0;
   text-align: center;
   font-size: 0.875rem;
   color: rgb(148 163 184);
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover .hintText {
+  opacity: 1;
 }
 
 /* Progress bar */
 .progressWrapper {
   width: 100%;
   height: 6px;
-  background: rgb(30 41 59);
+  background: rgba(30, 41, 59, 0.5);
   border-radius: 9999px;
   overflow: hidden;
   margin: 1rem 0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .progressBar {
   height: 100%;
   background: linear-gradient(90deg, #3b82f6, #60a5fa);
-  transition: width 0.3s ease;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.3);
 }
 
 /* Controls */
 .controls {
   display: flex;
   justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 1.5rem;
+  margin-top: 2.5rem;
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .shortcuts {
-  margin-top: 2rem;
+  margin-top: 2.5rem;
   text-align: center;
   font-size: 0.875rem;
   color: rgb(148 163 184);
+  opacity: 0.8;
 }
