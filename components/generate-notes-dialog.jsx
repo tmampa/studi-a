@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,6 +24,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Sparkles,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 
 const subjects = [
@@ -43,7 +46,10 @@ const difficulties = [
 ];
 
 export function GenerateNotesDialog({ open, onOpenChange }) {
+  const router = useRouter();
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     topic: '',
     subject: '',
@@ -51,17 +57,49 @@ export function GenerateNotesDialog({ open, onOpenChange }) {
   });
 
   const handleNext = () => {
+    setError('');
     if (step < 3) setStep(step + 1);
   };
 
   const handleBack = () => {
+    setError('');
     if (step > 1) setStep(step - 1);
   };
 
-  const handleGenerate = () => {
-    console.log('Generating notes with:', formData);
-    // TODO: Implement note generation
-    onOpenChange(false);
+  const handleGenerate = async () => {
+    try {
+      setError('');
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const res = await fetch('/api/notes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to generate notes');
+      }
+
+      router.push(`/dashboard/notes/${data._id}`);
+      router.refresh();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error generating notes:', error);
+      setError(error.message || 'Failed to generate notes. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -75,13 +113,23 @@ export function GenerateNotesDialog({ open, onOpenChange }) {
           </DialogTitle>
         </DialogHeader>
 
+        {error && (
+          <div className="flex items-center gap-2 p-3 text-sm bg-destructive/15 border border-destructive/30 rounded-md text-destructive">
+            <AlertCircle className="w-4 h-4" />
+            <span>{error}</span>
+          </div>
+        )}
+
         <div className="py-4">
           {step === 1 && (
             <div className="space-y-4">
               <Input
                 placeholder="Enter a topic (e.g., Photosynthesis, Pythagoras Theorem)"
                 value={formData.topic}
-                onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                onChange={(e) => {
+                  setError('');
+                  setFormData({ ...formData, topic: e.target.value });
+                }}
                 className="text-lg"
               />
             </div>
@@ -92,7 +140,10 @@ export function GenerateNotesDialog({ open, onOpenChange }) {
               {subjects.map((subject) => (
                 <button
                   key={subject.name}
-                  onClick={() => setFormData({ ...formData, subject: subject.name })}
+                  onClick={() => {
+                    setError('');
+                    setFormData({ ...formData, subject: subject.name });
+                  }}
                   className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all duration-200 hover:border-primary/50 hover:bg-accent/50 ${
                     formData.subject === subject.name
                       ? 'border-primary bg-accent/50'
@@ -111,7 +162,10 @@ export function GenerateNotesDialog({ open, onOpenChange }) {
               {difficulties.map((diff) => (
                 <button
                   key={diff.name}
-                  onClick={() => setFormData({ ...formData, difficulty: diff.name })}
+                  onClick={() => {
+                    setError('');
+                    setFormData({ ...formData, difficulty: diff.name });
+                  }}
                   className={`flex flex-col items-center justify-center p-6 rounded-lg border-2 transition-all duration-200 hover:border-primary/50 hover:bg-accent/50 ${
                     formData.difficulty === diff.name
                       ? 'border-primary bg-accent/50'
@@ -150,11 +204,20 @@ export function GenerateNotesDialog({ open, onOpenChange }) {
           ) : (
             <Button
               onClick={handleGenerate}
-              disabled={!formData.difficulty}
+              disabled={!formData.difficulty || loading}
               className="bg-primary hover:bg-primary/90"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generate Notes
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Notes
+                </>
+              )}
             </Button>
           )}
         </DialogFooter>

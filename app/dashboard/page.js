@@ -5,35 +5,48 @@ import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/ui/sidebar';
 import { StudyNoteCard } from '@/components/ui/study-note-card';
 import { Button } from '@/components/ui/button';
-import { Plus, BookOpen, Clock } from 'lucide-react';
+import { Plus, BookOpen, Clock, Loader2 } from 'lucide-react';
 import { GenerateNotesDialog } from '@/components/generate-notes-dialog';
-
-// Dummy data for study notes
-const dummyNotes = [
-  {
-    id: 1,
-    title: 'Introduction to React Hooks',
-    subject: 'Web Development',
-    date: '2024-01-15',
-  },
-  {
-    id: 2,
-    title: 'Advanced JavaScript Concepts',
-    subject: 'Programming',
-    date: '2024-01-14',
-  },
-  {
-    id: 3,
-    title: 'CSS Grid and Flexbox',
-    subject: 'Web Design',
-    date: '2024-01-13',
-  },
-];
 
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const fetchNotes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const res = await fetch('/api/notes', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to fetch notes');
+      }
+      
+      const data = await res.json();
+      setNotes(data);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -45,10 +58,11 @@ export default function Dashboard() {
     }
     
     setUser(JSON.parse(storedUser));
+    fetchNotes();
   }, [router]);
 
   const handleViewNote = (noteId) => {
-    console.log('Viewing note:', noteId);
+    router.push(`/dashboard/notes/${noteId}`);
   };
 
   if (!user) return null;
@@ -73,12 +87,14 @@ export default function Dashboard() {
                   <div className="flex gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <BookOpen className="w-4 h-4" />
-                      <span>{dummyNotes.length} Notes</span>
+                      <span>{notes.length} Notes</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      <span>Last updated {new Date(dummyNotes[0].date).toLocaleDateString()}</span>
-                    </div>
+                    {notes.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        <span>Last updated {new Date(notes[0].createdAt).toLocaleDateString()}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -94,17 +110,38 @@ export default function Dashboard() {
         {/* Notes Grid */}
         <div className="px-8 py-12 max-w-7xl mx-auto">
           <h2 className="text-2xl font-semibold mb-6">Your Study Notes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dummyNotes.map((note) => (
-              <StudyNoteCard
-                key={note.id}
-                title={note.title}
-                subject={note.subject}
-                date={note.date}
-                onView={() => handleViewNote(note.id)}
-              />
-            ))}
-          </div>
+          
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin mb-4" />
+              <p>Loading your notes...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-destructive mb-4">{error}</p>
+              <Button variant="outline" onClick={fetchNotes}>Try Again</Button>
+            </div>
+          ) : notes.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="mb-4">You haven't created any notes yet.</p>
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Your First Note
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {notes.map((note) => (
+                <StudyNoteCard
+                  key={note._id}
+                  title={note.title}
+                  subject={note.subject}
+                  date={note.createdAt}
+                  onView={() => handleViewNote(note._id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
