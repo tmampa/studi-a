@@ -4,6 +4,34 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import 'katex/dist/katex.min.css';
+import katex from 'katex';
+
+function renderMath(text) {
+  let result = text;
+  
+  // Replace display math ($$...$$)
+  result = result.replace(/\$\$(.*?)\$\$/g, (match, formula) => {
+    try {
+      return katex.renderToString(formula, { displayMode: true });
+    } catch (error) {
+      console.error('KaTeX error:', error);
+      return match;
+    }
+  });
+  
+  // Replace inline math ($...$)
+  result = result.replace(/\$(.*?)\$/g, (match, formula) => {
+    try {
+      return katex.renderToString(formula, { displayMode: false });
+    } catch (error) {
+      console.error('KaTeX error:', error);
+      return match;
+    }
+  });
+  
+  return result;
+}
 
 function LoadingState() {
   return (
@@ -154,13 +182,14 @@ export default function NotePage() {
                 <h2 className="text-2xl font-semibold">
                   {chapter.title}
                 </h2>
-                <div className="prose prose-invert max-w-none">
-                  {chapter.content.split('\n').map((paragraph, index) => (
-                    <p key={index} className="text-muted-foreground">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
+                <div 
+                  className="prose prose-invert max-w-none"
+                  dangerouslySetInnerHTML={{ 
+                    __html: chapter.content.split('\n').map(paragraph => 
+                      `<p class="text-muted-foreground">${renderMath(paragraph)}</p>`
+                    ).join('')
+                  }}
+                />
               </div>
             ))}
           </div>
