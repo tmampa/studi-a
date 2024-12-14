@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/ui/sidebar';
 import { StudyNoteCard } from '@/components/ui/study-note-card';
 import { Button } from '@/components/ui/button';
 import { Plus, BookOpen, Clock } from 'lucide-react';
+import { GenerateNotesDialog } from '@/components/generate-notes-dialog';
 
 // Dummy data for study notes
 const dummyNotes = [
@@ -32,6 +33,7 @@ const dummyNotes = [
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -45,13 +47,7 @@ export default function Dashboard() {
     setUser(JSON.parse(storedUser));
   }, [router]);
 
-  const handleGenerateNotes = () => {
-    // TODO: Implement note generation
-    console.log('Generating notes...');
-  };
-
   const handleViewNote = (noteId) => {
-    // TODO: Implement note viewing
     console.log('Viewing note:', noteId);
   };
 
@@ -86,7 +82,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 
-                <Button onClick={handleGenerateNotes} size="lg" className="shadow-lg">
+                <Button onClick={() => setDialogOpen(true)} size="lg" className="shadow-lg">
                   <Plus className="w-5 h-5 mr-2" />
                   Generate Study Notes
                 </Button>
@@ -111,6 +107,11 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      <GenerateNotesDialog 
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   );
 } 
