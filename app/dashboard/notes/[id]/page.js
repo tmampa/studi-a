@@ -176,19 +176,30 @@ export default function NotePage() {
   };
 
   const handleGenerateFlashcards = async () => {
-    setGeneratingFlashcards(true);
     try {
+      setGeneratingFlashcards(true);
+      const token = localStorage.getItem('token');
+      
       const res = await fetch(`/api/notes/${params.id}/flashcards`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      if (!res.ok) throw new Error('Failed to generate flashcards');
-      // Refresh note data to get updated flashcard status
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to generate flashcards');
+      }
+
+      // Fetch the updated note to get the new flashcard status
       await fetchNote();
+      
+      // Navigate to flashcards page
+      router.push(`/dashboard/flashcards/${params.id}`);
     } catch (error) {
       console.error('Error generating flashcards:', error);
+      // You might want to show this error to the user
     } finally {
       setGeneratingFlashcards(false);
     }

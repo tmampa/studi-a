@@ -15,6 +15,17 @@ const ChapterSchema = new mongoose.Schema({
   },
 });
 
+const FlashcardSchema = new mongoose.Schema({
+  front: {
+    type: String,
+    required: true,
+  },
+  back: {
+    type: String,
+    required: true,
+  },
+});
+
 const NoteSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -33,6 +44,17 @@ const NoteSchema = new mongoose.Schema({
     required: true,
   },
   chapters: [ChapterSchema],
+  flashcards: {
+    type: [FlashcardSchema],
+    default: [],
+  },
+  hasFlashcards: {
+    type: Boolean,
+    default: false,
+  },
+  flashcardsGeneratedAt: {
+    type: Date,
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -44,4 +66,4 @@ const NoteSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.models.Note || mongoose.model('Note', NoteSchema); 
+export default mongoose.models.Note || mongoose.model('Note', NoteSchema);
