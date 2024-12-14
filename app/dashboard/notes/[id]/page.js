@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Loader2, AlertCircle, Brain, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import 'katex/dist/katex.min.css';
 import katex from 'katex';
 
@@ -123,6 +124,8 @@ export default function NotePage() {
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
+  const [generatingQuiz, setGeneratingQuiz] = useState(false);
 
   const fetchNote = async () => {
     try {
@@ -172,6 +175,44 @@ export default function NotePage() {
     router.push('/dashboard');
   };
 
+  const handleGenerateFlashcards = async () => {
+    setGeneratingFlashcards(true);
+    try {
+      const res = await fetch(`/api/notes/${params.id}/flashcards`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!res.ok) throw new Error('Failed to generate flashcards');
+      // Refresh note data to get updated flashcard status
+      await fetchNote();
+    } catch (error) {
+      console.error('Error generating flashcards:', error);
+    } finally {
+      setGeneratingFlashcards(false);
+    }
+  };
+
+  const handleGenerateQuiz = async () => {
+    setGeneratingQuiz(true);
+    try {
+      const res = await fetch(`/api/notes/${params.id}/quiz`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!res.ok) throw new Error('Failed to generate quiz');
+      // Refresh note data to get updated quiz status
+      await fetchNote();
+    } catch (error) {
+      console.error('Error generating quiz:', error);
+    } finally {
+      setGeneratingQuiz(false);
+    }
+  };
+
   if (loading) {
     return <LoadingState />;
   }
@@ -215,6 +256,64 @@ export default function NotePage() {
               <span>•</span>
               <span>{note.difficulty}</span>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="p-6 flex flex-col items-center space-y-4">
+              <Brain className="w-8 h-8 text-blue-400" />
+              <h3 className="font-semibold text-white">Flashcards</h3>
+              {note.hasFlashcards ? (
+                <Button 
+                  variant="outline" 
+                  onClick={() => router.push(`/dashboard/flashcards/${note._id}`)}
+                >
+                  View Flashcards
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline"
+                  onClick={handleGenerateFlashcards}
+                  disabled={generatingFlashcards}
+                >
+                  {generatingFlashcards ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate Flashcards'
+                  )}
+                </Button>
+              )}
+            </Card>
+
+            <Card className="p-6 flex flex-col items-center space-y-4">
+              <GraduationCap className="w-8 h-8 text-green-400" />
+              <h3 className="font-semibold text-white">Quiz</h3>
+              {note.hasQuiz ? (
+                <Button 
+                  variant="outline"
+                  onClick={() => router.push(`/dashboard/quiz/${note._id}`)}
+                >
+                  View Quiz
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline"
+                  onClick={handleGenerateQuiz}
+                  disabled={generatingQuiz}
+                >
+                  {generatingQuiz ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate Quiz'
+                  )}
+                </Button>
+              )}
+            </Card>
           </div>
 
           <div className="space-y-8">
