@@ -8,33 +8,32 @@ import 'katex/dist/katex.min.css';
 import katex from 'katex';
 
 function formatContent(text) {
-  // First, clean up any literal \n characters and replace with actual newlines
-  text = text.replace(/\\n/g, '\n');
+  text = text.replace(/\\n/g, '\n').replace(/\n{3,}/g, '\n\n');
   
-  // Clean up multiple newlines to just double newlines
-  text = text.replace(/\n{3,}/g, '\n\n');
-  
-  // Format headings
+  // Format headings with smaller size
   text = text.replace(/\*\*(.*?):\*\*/g, (match, title) => {
-    return `<h2 class="text-2xl font-semibold mb-4">${title.trim()}</h2>`;
+    return `<h2 class="text-lg font-semibold text-white mb-4 mt-6 border-b border-gray-700 pb-2">${title.trim()}</h2>`;
   });
   
-  // Format list items
+  // Format list items with smaller text
   text = text.replace(/- \*\*(.*?):\*\*/g, (match, content) => {
-    return `<div class="flex gap-2 mb-2"><span>•</span><span><strong>${content.trim()}</strong>:</span></div>`;
+    return `<div class="flex gap-2 mb-2 items-baseline text-sm">
+      <span class="text-blue-400">•</span>
+      <div>
+        <strong class="text-white">${content.trim()}</strong>:
+      </div>
+    </div>`;
   });
   
   // Format mathematical expressions
   text = text.replace(/\b([a-z])2\b/g, '$1²');
   text = text.replace(/\b([a-z])([2-9])\b/g, '$1^$2');
   
-  // Split into paragraphs and wrap each in a div
   const paragraphs = text.split('\n\n').filter(p => p.trim());
   
-  // Apply KaTeX rendering to each paragraph
   return paragraphs.map(p => {
     const rendered = renderMath(p.trim());
-    return `<div class="mb-4">${rendered}</div>`;
+    return `<div class="mb-3 leading-relaxed text-gray-300 text-sm">${rendered}</div>`;
   }).join('');
 }
 
@@ -216,11 +215,11 @@ export default function NotePage() {
           <div className="space-y-8">
             {note.chapters.map((chapter) => (
               <div key={chapter.order} className="space-y-4">
-                <h2 className="text-2xl font-semibold">
+                <h2 className="text-xl font-bold text-white">
                   {chapter.title}
                 </h2>
                 <div 
-                  className="prose prose-invert max-w-none"
+                  className="prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-gray-300"
                   dangerouslySetInnerHTML={{ 
                     __html: formatContent(chapter.content)
                   }}
