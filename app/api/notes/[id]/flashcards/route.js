@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import Note from '@/models/Note';
-import { verifyToken } from '@/lib/jwt';
 import { generateFlashcards } from '@/lib/gemini';
+import { ObjectId } from 'mongodb';
+import { verifyToken } from '@/lib/jwt';
+import Note from '@/models/Note';
 
 export async function POST(request, { params }) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request, { params }) {
     const token = request.headers.get('authorization')?.split(' ')[1];
     if (!token) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Authentication required' },
         { status: 401 }
       );
     }
@@ -34,7 +35,8 @@ export async function POST(request, { params }) {
       );
     }
 
-    const { id } = params;
+    // Validate and extract note ID
+    const id = params.id;
     if (!id?.match(/^[0-9a-fA-F]{24}$/)) {
       return NextResponse.json(
         { error: 'Invalid note ID format' },
@@ -42,7 +44,11 @@ export async function POST(request, { params }) {
       );
     }
 
-    const note = await Note.findById(id);
+    // Find the note using Mongoose
+    const note = await Note.findOne({
+      _id: id,
+      userId: decoded.userId
+    });
 
     if (!note) {
       return NextResponse.json(
@@ -51,79 +57,36 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Verify note ownership
-    if (note.userId.toString() !== decoded.userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 403 }
-      );
-    }
-
-    // Combine all chapter content
-    if (!note.chapters || !Array.isArray(note.chapters) || note.chapters.length === 0) {
-      return NextResponse.json(
-        { error: 'Note has no content to generate flashcards from' },
-        { status: 400 }
-      );
-    }
-
-    const noteContent = note.chapters.map(chapter => 
+    // Generate content for flashcards
+    const content = note.chapters.map(chapter => 
       `${chapter.title}\n${chapter.content}`
     ).join('\n\n');
 
-    // Generate flashcards
-    const flashcards = await generateFlashcards(noteContent);
-
-    // Update note with flashcards
-    note.flashcards = flashcards;
-    note.hasFlashcards = true;
-    note.flashcardsGeneratedAt = new Date();
-    
     try {
+      // Generate flashcards
+      const flashcards = await generateFlashcards(content);
+      
+      // Update note with flashcards
+      note.flashcards = flashcards;
+      note.hasFlashcards = true;
+      note.flashcardsGeneratedAt = new Date();
       await note.save();
+
+      return NextResponse.json({ 
+        success: true, 
+        flashcards 
+      });
     } catch (error) {
-      console.error('Error saving flashcards:', error);
+      console.error('Error generating flashcards:', error);
       return NextResponse.json(
-        { error: 'Failed to save flashcards to database' },
+        { error: 'Failed to generate flashcards' },
         { status: 500 }
       );
     }
-
-    return NextResponse.json({ 
-      message: 'Flashcards generated successfully',
-      count: flashcards.length,
-      flashcards
-    });
-
   } catch (error) {
-    console.error('Error generating flashcards:', error);
-    
-    // Handle specific error types
-    if (error.message.includes('GEMINI_API_KEY')) {
-      return NextResponse.json(
-        { error: 'AI service configuration error' },
-        { status: 500 }
-      );
-    }
-
-    if (error.message.includes('Invalid note content')) {
-      return NextResponse.json(
-        { error: 'Note content is invalid or empty' },
-        { status: 400 }
-      );
-    }
-
-    if (error.message.includes('Failed to parse') || 
-        error.message.includes('Invalid flashcard') ||
-        error.message.includes('No valid flashcards')) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
+    console.error('Error in flashcards route:', error);
     return NextResponse.json(
-      { error: 'Failed to generate flashcards. Please try again.' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -135,7 +98,7 @@ export async function GET(request, { params }) {
     const token = request.headers.get('authorization')?.split(' ')[1];
     if (!token) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Authentication required' },
         { status: 401 }
       );
     }
@@ -159,7 +122,8 @@ export async function GET(request, { params }) {
       );
     }
 
-    const { id } = params;
+    // Validate and extract note ID
+    const id = params.id;
     if (!id?.match(/^[0-9a-fA-F]{24}$/)) {
       return NextResponse.json(
         { error: 'Invalid note ID format' },
@@ -167,8 +131,11 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Include userId in the select to verify ownership
-    const note = await Note.findById(id).select('userId flashcards hasFlashcards flashcardsGeneratedAt');
+    // Find the note using Mongoose
+    const note = await Note.findOne({
+      _id: id,
+      userId: decoded.userId
+    }).select('flashcards hasFlashcards flashcardsGeneratedAt');
 
     if (!note) {
       return NextResponse.json(
@@ -177,24 +144,16 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Verify note ownership
-    if (note.userId.toString() !== decoded.userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 403 }
-      );
-    }
-
     return NextResponse.json({
+      success: true,
       flashcards: note.flashcards || [],
       hasFlashcards: note.hasFlashcards || false,
       flashcardsGeneratedAt: note.flashcardsGeneratedAt
     });
-
   } catch (error) {
-    console.error('Error retrieving flashcards:', error);
+    console.error('Error in GET flashcards:', error);
     return NextResponse.json(
-      { error: 'Failed to retrieve flashcards' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
