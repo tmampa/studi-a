@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sidebar } from "@/components/ui/sidebar";
+import Sidebar from "@/components/ui/sidebar";
 import { isAuthenticated } from "@/lib/auth";
 
 export default function DashboardLayout({ children }) {
@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar className="w-64 flex-shrink-0" />
+      <Sidebar />
       <main className="flex-1 overflow-y-auto">
         <div className="container mx-auto py-6">
           {children}

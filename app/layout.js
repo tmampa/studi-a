@@ -1,7 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/ui/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,15 +12,19 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <body className={inter.className}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
           disableTransitionOnChange
+          storageKey="studi-a-theme"
         >
-          {children}
+          <div className="min-h-screen bg-background text-foreground">
+            {children}
+          </div>
           <Toaster />
         </ThemeProvider>
       </body>
