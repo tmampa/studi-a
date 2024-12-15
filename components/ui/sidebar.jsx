@@ -1,12 +1,32 @@
 import Link from 'next/link';
-import { Home, BookOpen, Settings, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Home, BookOpen, LogOut } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export function Sidebar() {
+  const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+  
   const menuItems = [
-    { icon: Home, label: 'Dashboard', href: '/dashboard' },
-    { icon: BookOpen, label: 'Study Notes', href: '/dashboard/notes' },
-    { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+    { id: 'dashboard', icon: Home, label: 'Dashboard', href: '/dashboard' },
+    { id: 'notes', icon: BookOpen, label: 'My Notes', href: '/dashboard/notes' },
   ];
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      router.push('/login');
+    }
+  };
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className="h-screen w-64 bg-card border-r border-border">
@@ -17,7 +37,7 @@ export function Sidebar() {
       <nav className="px-4 space-y-2">
         {menuItems.map((item) => (
           <Link
-            key={item.href}
+            key={item.id}
             href={item.href}
             className="flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
           >
@@ -28,11 +48,14 @@ export function Sidebar() {
       </nav>
       
       <div className="absolute bottom-8 px-8 w-64">
-        <button className="flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-destructive/90 hover:text-destructive-foreground text-muted-foreground transition-colors w-full">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-destructive/90 hover:text-destructive-foreground text-muted-foreground transition-colors w-full"
+        >
           <LogOut className="w-4 h-4" />
           Logout
         </button>
       </div>
     </div>
   );
-} 
+}
