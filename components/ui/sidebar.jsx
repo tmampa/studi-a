@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Home, BookOpen, LogOut } from 'lucide-react';
+import { Home, BookOpen, LogOut, BarChart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function Sidebar() {
@@ -10,6 +10,7 @@ export function Sidebar() {
   const menuItems = [
     { id: 'dashboard', icon: Home, label: 'Dashboard', href: '/dashboard' },
     { id: 'notes', icon: BookOpen, label: 'My Notes', href: '/dashboard/notes' },
+    { id: 'stats', icon: BarChart, label: 'Study Stats', href: '/dashboard/stats' },
   ];
 
   useEffect(() => {

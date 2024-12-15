@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Sidebar } from '@/components/ui/sidebar';
 import { Plus, Search, Loader2, BookOpen, Brain, FileText, Trash2 } from 'lucide-react';
 import { GenerateNotesDialog } from '@/components/generate-notes-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -248,12 +247,5 @@ export default function NotesPage() {
     );
   };
 
-  return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 overflow-y-auto">
-        <MainContent />
-      </div>
-    </div>
-  );
+  return <MainContent />;
 }

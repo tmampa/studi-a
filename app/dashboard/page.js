@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sidebar } from '@/components/ui/sidebar';
 import { StudyNoteCard } from '@/components/ui/study-note-card';
 import { Button } from '@/components/ui/button';
 import { Plus, BookOpen, Clock, Loader2 } from 'lucide-react';
@@ -151,4 +150,4 @@ export default function Dashboard() {
       />
     </div>
   );
-} 
+}
