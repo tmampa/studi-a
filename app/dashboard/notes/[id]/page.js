@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { use } from 'react';
 import { ChevronLeft, Loader2, AlertCircle, Brain, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -118,14 +119,17 @@ function ErrorState({ message, onRetry, onBack }) {
   );
 }
 
-export default function NotePage() {
+export default function NotePage({ params }) {
   const router = useRouter();
-  const params = useParams();
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
+  const [hasQuiz, setHasQuiz] = useState(false);
+  
+  // Unwrap params using React.use()
+  const unwrappedParams = use(params);
 
   const fetchNote = async () => {
     try {
@@ -138,25 +142,22 @@ export default function NotePage() {
         return;
       }
 
-      const id = params?.id;
-      // Validate ID format before making the request
-      if (!id?.match(/^[0-9a-fA-F]{24}$/)) {
-        throw new Error('Invalid note ID format');
-      }
-
-      const res = await fetch(`/api/notes/${id}`, {
+      const res = await fetch(`/api/notes/${unwrappedParams.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to fetch note');
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to fetch note');
       }
-      
+
       const data = await res.json();
       setNote(data);
+      
+      // Check if note has a quiz
+      setHasQuiz(Array.isArray(data.quiz) && data.quiz.length > 0);
     } catch (error) {
       console.error('Error fetching note:', error);
       setError(error.message);
@@ -166,24 +167,20 @@ export default function NotePage() {
   };
 
   useEffect(() => {
-    if (params?.id) {
-      fetchNote();
-    }
-  }, [params?.id]);
+    fetchNote();
+  }, [unwrappedParams.id]);
 
   const handleBack = () => {
     router.push('/dashboard');
   };
 
   const handleGenerateFlashcards = async () => {
+    setGeneratingFlashcards(true);
     try {
-      setGeneratingFlashcards(true);
-      const token = localStorage.getItem('token');
-      
-      const res = await fetch(`/api/notes/${params.id}/flashcards`, {
+      const res = await fetch(`/api/notes/${unwrappedParams.id}/flashcards`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
 
@@ -192,14 +189,14 @@ export default function NotePage() {
         throw new Error(error.message || 'Failed to generate flashcards');
       }
 
-      // Fetch the updated note to get the new flashcard status
+      // Refresh note data to get updated flashcards
       await fetchNote();
-      
+
       // Navigate to flashcards page
-      router.push(`/dashboard/flashcards/${params.id}`);
+      router.push(`/dashboard/flashcards/${unwrappedParams.id}`);
     } catch (error) {
       console.error('Error generating flashcards:', error);
-      // You might want to show this error to the user
+      setError(error.message);
     } finally {
       setGeneratingFlashcards(false);
     }
@@ -208,20 +205,38 @@ export default function NotePage() {
   const handleGenerateQuiz = async () => {
     setGeneratingQuiz(true);
     try {
-      const res = await fetch(`/api/notes/${params.id}/quiz`, {
+      const res = await fetch(`/api/notes/${unwrappedParams.id}/quiz`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      if (!res.ok) throw new Error('Failed to generate quiz');
-      // Refresh note data to get updated quiz status
-      await fetchNote();
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to generate quiz');
+      }
+
+      if (!data.success || !data.quiz) {
+        throw new Error('Failed to generate quiz. Please try again.');
+      }
+
+      // Update quiz state
+      setHasQuiz(true);
+
+      // Navigate to quiz page
+      router.push(`/dashboard/quiz/${unwrappedParams.id}`);
     } catch (error) {
       console.error('Error generating quiz:', error);
+      setError(error.message);
     } finally {
       setGeneratingQuiz(false);
     }
+  };
+
+  const handleTakeQuiz = () => {
+    router.push(`/dashboard/quiz/${unwrappedParams.id}`);
   };
 
   if (loading) {
@@ -301,12 +316,12 @@ export default function NotePage() {
             <Card className="p-6 flex flex-col items-center space-y-4">
               <GraduationCap className="w-8 h-8 text-green-400" />
               <h3 className="font-semibold text-white">Quiz</h3>
-              {note.hasQuiz ? (
+              {hasQuiz ? (
                 <Button 
-                  variant="outline"
-                  onClick={() => router.push(`/dashboard/quiz/${note._id}`)}
+                  variant="default"
+                  onClick={handleTakeQuiz}
                 >
-                  View Quiz
+                  Take Quiz
                 </Button>
               ) : (
                 <Button 
@@ -317,7 +332,7 @@ export default function NotePage() {
                   {generatingQuiz ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
+                      Generating Quiz...
                     </>
                   ) : (
                     'Generate Quiz'

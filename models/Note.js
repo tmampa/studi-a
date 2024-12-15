@@ -26,6 +26,25 @@ const FlashcardSchema = new mongoose.Schema({
   },
 });
 
+const QuizSchema = new mongoose.Schema({
+  question: {
+    type: String,
+    required: true,
+  },
+  options: [{
+    type: String,
+    required: true,
+  }],
+  correctAnswer: {
+    type: Number,
+    required: true,
+  },
+  explanation: {
+    type: String,
+    required: true,
+  },
+});
+
 const NoteSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -55,6 +74,7 @@ const NoteSchema = new mongoose.Schema({
   flashcardsGeneratedAt: {
     type: Date,
   },
+  quiz: [QuizSchema],
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
