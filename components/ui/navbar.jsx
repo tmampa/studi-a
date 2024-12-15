@@ -4,15 +4,35 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { isAuthenticated } from '@/lib/auth';
 
 export default function Navbar() {
   const router = useRouter();
   const [isAuth, setIsAuth] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setIsAuth(isAuthenticated());
+    const token = localStorage.getItem('token');
+    setIsAuth(!!token);
+    setMounted(true);
   }, []);
+
+  // Don't render auth-dependent content until after mount
+  const authContent = mounted ? (
+    isAuth ? (
+      <Button onClick={() => router.push('/dashboard')}>
+        Go to Dashboard
+      </Button>
+    ) : (
+      <>
+        <Button variant="ghost" onClick={() => router.push('/login')}>
+          Log in
+        </Button>
+        <Button onClick={() => router.push('/register')}>
+          Get Started
+        </Button>
+      </>
+    )
+  ) : null;
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b">
@@ -40,20 +60,7 @@ export default function Navbar() {
 
           {/* Auth Buttons */}
           <div className="flex items-center space-x-4">
-            {isAuth ? (
-              <Button onClick={() => router.push('/dashboard')}>
-                Go to Dashboard
-              </Button>
-            ) : (
-              <>
-                <Button variant="ghost" onClick={() => router.push('/login')}>
-                  Log in
-                </Button>
-                <Button onClick={() => router.push('/register')}>
-                  Get Started
-                </Button>
-              </>
-            )}
+            {authContent}
           </div>
         </div>
       </div>
