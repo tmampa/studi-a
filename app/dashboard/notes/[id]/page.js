@@ -10,38 +10,54 @@ import 'katex/dist/katex.min.css';
 import katex from 'katex';
 
 function formatContent(text) {
-  text = text.replace(/\\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+  if (!text) return '';
+
+  // Handle headings with different levels
+  text = text.replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold text-white mb-5 mt-6">$1</h1>');
+  text = text.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-primary/90 mb-4 mt-5 pb-2 border-b border-border">$1</h2>');
+  text = text.replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold text-white/90 mb-3 mt-4">$1</h3>');
   
-  // Format headings
-  text = text.replace(/\*\*(.*?):\*\*/g, (match, title) => {
-    return `<h2 class="text-lg font-semibold text-white mb-4 mt-6 border-b border-gray-700 pb-2">${title.trim()}</h2>`;
-  });
+  // Handle unordered lists
+  text = text.replace(/^\* (.*$)/gm, '<li class="flex gap-2 items-baseline mb-1.5 text-sm"><span class="text-primary">•</span>$1</li>');
+  text = text.replace(/^- (.*$)/gm, '<li class="flex gap-2 items-baseline mb-1.5 text-sm"><span class="text-primary">•</span>$1</li>');
   
-  // Format list items
-  text = text.replace(/- \*\*(.*?):\*\*/g, (match, content) => {
-    return `<div class="flex gap-2 mb-2 items-baseline text-sm">
-      <span class="text-blue-400">•</span>
-      <div>
-        <strong class="text-white">${content.trim()}</strong>:
-      </div>
-    </div>`;
-  });
+  // Wrap lists in ul container
+  text = text.replace(/((?:<li.*?>.*?<\/li>\n?)+)/g, '<ul class="space-y-1 my-3">$1</ul>');
   
-  // Format remaining bold text (not headings or list items)
-  text = text.replace(/\*\*(.*?)\*\*/g, (match, content) => {
-    return `<strong class="text-white">${content.trim()}</strong>`;
-  });
+  // Handle ordered lists
+  text = text.replace(/^\d+\. (.*$)/gm, '<li class="flex gap-2 items-baseline mb-1.5 list-decimal ml-4 text-gray-300 text-sm">$1</li>');
+  
+  // Handle bold text
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white/90 font-medium">$1</strong>');
+  
+  // Handle italic text
+  text = text.replace(/\*(.*?)\*/g, '<em class="text-gray-300 italic">$1</em>');
+  
+  // Handle inline code
+  text = text.replace(/`(.*?)`/g, '<code class="px-1.5 py-0.5 bg-primary/10 text-primary rounded font-mono text-xs">$1</code>');
+  
+  // Handle code blocks
+  text = text.replace(/```([\s\S]*?)```/g, '<pre class="bg-background/50 border border-border rounded-lg p-3 my-3 overflow-x-auto"><code class="text-gray-300 font-mono text-xs">$1</code></pre>');
+  
+  // Handle blockquotes
+  text = text.replace(/^> (.*$)/gm, '<blockquote class="border-l-4 border-primary bg-primary/5 pl-4 py-2 my-3 text-gray-300 italic text-sm">$1</blockquote>');
+  
+  // Handle horizontal rules
+  text = text.replace(/^---$/gm, '<hr class="my-6 border-t border-border" />');
   
   // Format mathematical expressions
   text = text.replace(/\b([a-z])2\b/g, '$1²');
   text = text.replace(/\b([a-z])([2-9])\b/g, '$1^$2');
   
+  // Split into paragraphs and handle remaining text
   const paragraphs = text.split('\n\n').filter(p => p.trim());
-  
   return paragraphs.map(p => {
-    const rendered = renderMath(p.trim());
-    return `<div class="mb-3 leading-relaxed text-gray-300 text-sm">${rendered}</div>`;
-  }).join('');
+    if (!p.startsWith('<')) {
+      // Only wrap in paragraph if not already a HTML element
+      p = `<p class="mb-3 leading-relaxed text-gray-300 text-sm">${p.trim()}</p>`;
+    }
+    return renderMath(p);
+  }).join('\n');
 }
 
 function renderMath(text) {
@@ -344,12 +360,27 @@ export default function NotePage({ params }) {
 
           <div className="space-y-8">
             {note.chapters.map((chapter) => (
-              <div key={chapter.order} className="space-y-4">
-                <h2 className="text-xl font-bold text-white">
-                  {chapter.title}
-                </h2>
+              <div 
+                key={chapter.order} 
+                className="p-8 rounded-lg bg-card/50 border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_15px_rgba(139,92,246,0.1)]"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary text-lg font-semibold">
+                    {chapter.order}
+                  </span>
+                  <h2 className="text-2xl font-bold text-white">
+                    {chapter.title}
+                  </h2>
+                </div>
                 <div 
-                  className="prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-gray-300"
+                  className="prose prose-invert prose-lg max-w-none
+                    prose-headings:text-white prose-headings:font-bold
+                    prose-p:text-gray-300 prose-p:leading-relaxed
+                    prose-strong:text-white/90 prose-strong:font-medium
+                    prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                    prose-pre:bg-background/50 prose-pre:border prose-pre:border-border
+                    prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:text-gray-300
+                    prose-li:text-gray-300 prose-li:marker:text-primary"
                   dangerouslySetInnerHTML={{ 
                     __html: formatContent(chapter.content)
                   }}
