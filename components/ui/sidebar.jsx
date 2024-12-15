@@ -1,19 +1,32 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Home, BookOpen, LogOut } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export function Sidebar() {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+  
   const menuItems = [
     { id: 'dashboard', icon: Home, label: 'Dashboard', href: '/dashboard' },
     { id: 'notes', icon: BookOpen, label: 'My Notes', href: '/dashboard/notes' },
   ];
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/login');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      router.push('/login');
+    }
   };
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className="h-screen w-64 bg-card border-r border-border">

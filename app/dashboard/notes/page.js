@@ -6,16 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Sidebar } from '@/components/ui/sidebar';
-import { Plus, Search, Loader2, BookOpen, Brain, FileText } from 'lucide-react';
+import { Plus, Search, Loader2, BookOpen, Brain, FileText, Trash2 } from 'lucide-react';
 import { GenerateNotesDialog } from '@/components/generate-notes-dialog';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import { useToast } from "@/components/ui/use-toast";
 
 export default function NotesPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState(null);
 
   const fetchNotes = async () => {
     try {
@@ -64,6 +69,46 @@ export default function NotesPage() {
 
   const handleGenerateQuiz = (noteId) => {
     router.push(`/dashboard/quiz/${noteId}`);
+  };
+
+  const handleDeleteClick = (note) => {
+    setNoteToDelete(note);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!noteToDelete) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/notes/${noteToDelete._id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete note');
+      }
+
+      setNotes(notes.filter(note => note._id !== noteToDelete._id));
+      toast({
+        title: "Note deleted",
+        description: "The note has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setNoteToDelete(null);
+    }
   };
 
   const MainContent = () => {
@@ -132,9 +177,19 @@ export default function NotesPage() {
               {filteredNotes.map((note) => (
                 <Card key={note._id} className="p-6 flex flex-col">
                   <div className="flex-1">
-                    <h2 className="text-xl font-semibold mb-2 line-clamp-2">
-                      {note.title}
-                    </h2>
+                    <div className="flex justify-between items-start mb-2">
+                      <h2 className="text-xl font-semibold line-clamp-2">
+                        {note.title}
+                      </h2>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteClick(note)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                     {note.subject && (
                       <p className="text-sm text-muted-foreground mb-4">
                         {note.subject}
@@ -180,6 +235,14 @@ export default function NotesPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           onSuccess={fetchNotes}
+        />
+
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Note"
+          description="Are you sure you want to delete this note? This action cannot be undone."
         />
       </div>
     );
