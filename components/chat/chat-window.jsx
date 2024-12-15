@@ -7,6 +7,7 @@ import rehypeHighlight from 'rehype-highlight';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const MarkdownComponents = {
@@ -71,6 +72,10 @@ export default function ChatWindow() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleClearChat = () => {
+    setMessages([]);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -114,8 +119,19 @@ export default function ChatWindow() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="mb-4">
+      <div className="mb-4 flex justify-between items-center">
         <h2 className="text-lg font-semibold">AI Study Assistant</h2>
+        {messages.length > 0 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClearChat}
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            title="Clear chat"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <ScrollArea className="flex-1 pr-4">
