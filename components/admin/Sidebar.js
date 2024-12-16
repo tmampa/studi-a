@@ -7,7 +7,8 @@ import {
   Users, 
   Settings, 
   Activity, 
-  LogOut 
+  LogOut,
+  FileText 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -24,6 +25,11 @@ export default function Sidebar() {
       href: '/admin/users', 
       label: 'User Management', 
       icon: Users 
+    },
+    { 
+      href: '/admin/notes', 
+      label: 'Notes Management', 
+      icon: FileText 
     },
     { 
       href: '/admin/activity', 
