@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/admin/Sidebar';
+import ActivityLog from '@/components/admin/ActivityLog';
 
-export default function AdminLayout({ children }) {
+export default function AdminActivityPage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -48,7 +48,7 @@ export default function AdminLayout({ children }) {
   }, [router]);
 
   if (loading) {
-    return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">Loading...</div>;
+    return <div>Loading...</div>;
   }
 
   if (!isAdmin) {
@@ -56,14 +56,18 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <div className="flex min-h-screen max-h-screen bg-[#0a0a0a] text-white overflow-hidden">
-      {/* Admin Sidebar */}
-      <Sidebar />
-
-      {/* Main Content Area */}
-      <main className="flex-grow overflow-y-auto p-0">
-        {children}
-      </main>
+    <div className="h-full overflow-y-auto bg-[#0a0a0a]">
+      <div className="container mx-auto px-6 py-10">
+        <div className="flex justify-between items-center mb-12">
+          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-blue-600">
+            Activity Log
+          </h1>
+        </div>
+        
+        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl shadow-2xl p-8">
+          <ActivityLog />
+        </div>
+      </div>
     </div>
   );
 }
