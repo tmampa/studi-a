@@ -16,22 +16,37 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
+
       const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || 'Login failed');
-      
+
+      if (!res.ok) {
+        throw new Error(data.message || data.error || 'Login failed');
+      }
+
+      if (!data.token || !data.user) {
+        throw new Error('Invalid response from server');
+      }
+
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Get user data from the response
+      const user = data.user;
       
-      router.push('/dashboard');
+      // Navigate based on user role
+      router.push(user.isAdmin ? '/admin/dashboard' : '/dashboard');
+      
     } catch (err) {
       setError(err.message);
+      console.error('Login error:', err);
     }
   };
 
@@ -40,7 +55,9 @@ export default function Login() {
       <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-lg shadow-lg border border-border">
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
-          <p className="text-sm text-muted-foreground">Enter your credentials to access your account</p>
+          <p className="text-sm text-muted-foreground">
+            Enter your credentials to access your account
+          </p>
         </div>
 
         {error && (
@@ -58,7 +75,9 @@ export default function Login() {
               type="email"
               placeholder="m@example.com"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               required
             />
           </div>
@@ -70,7 +89,9 @@ export default function Login() {
             <Input
               type="password"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
               required
             />
           </div>
@@ -82,11 +103,15 @@ export default function Login() {
 
         <div className="text-center text-sm">
           <span className="text-muted-foreground">Don't have an account? </span>
-          <Link href="/register" className="font-medium text-primary hover:text-primary/90">
+          <Link
+
+            href="/register"
+            className="font-medium text-primary hover:text-primary/90"
+          >
             Sign up
           </Link>
         </div>
       </div>
     </div>
   );
-} 
+}

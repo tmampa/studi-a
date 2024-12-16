@@ -26,12 +26,20 @@ export async function POST(request) {
       );
     }
 
-    // Generate token
-    const token = signToken({ userId: user._id });
+    // Generate token with admin status included
+    const token = signToken({ 
+      userId: user._id,
+      isAdmin: user.isAdmin 
+    });
 
     return Response.json({
       token,
-      user: { id: user._id, name: user.name, email: user.email }
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email,
+        isAdmin: user.isAdmin
+      }
     });
   } catch (error) {
     return Response.json(
@@ -39,4 +47,4 @@ export async function POST(request) {
       { status: 500 }
     );
   }
-} 
+}
