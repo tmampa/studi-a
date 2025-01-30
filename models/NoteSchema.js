@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+import ChapterSchema from './ChapterSchema';
+import FlashcardSchema from './FlashcardSchema';
+import QuizSchema from './QuizSchema';
 
 const NoteSchema = new mongoose.Schema({
   title: {
@@ -17,9 +20,9 @@ const NoteSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  chapters: [mongoose.Schema.Types.Mixed],
+  chapters: [ChapterSchema],
   flashcards: {
-    type: [mongoose.Schema.Types.Mixed],
+    type: [FlashcardSchema],
     default: [],
   },
   hasFlashcards: {
@@ -29,7 +32,7 @@ const NoteSchema = new mongoose.Schema({
   flashcardsGeneratedAt: {
     type: Date,
   },
-  quiz: [mongoose.Schema.Types.Mixed],
+  quiz: [QuizSchema],
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

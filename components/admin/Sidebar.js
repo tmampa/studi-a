@@ -25,11 +25,11 @@ export default function Sidebar() {
       label: 'User Management', 
       icon: Users 
     },
-    { 
-      href: '/admin/activity', 
-      label: 'Activity Log', 
-      icon: Activity 
-    },
+    // { 
+    //   href: '/admin/activity', 
+    //   label: 'Activity Log', 
+    //   icon: Activity 
+    // },
     { 
       href: '/admin/settings', 
       label: 'System Settings', 
