@@ -1,20 +1,5 @@
 import mongoose from 'mongoose';
 
-const ChapterSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-  },
-  content: {
-    type: String,
-    required: true,
-  },
-  order: {
-    type: Number,
-    required: true,
-  },
-});
-
 const NoteSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -32,7 +17,19 @@ const NoteSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  chapters: [ChapterSchema],
+  chapters: [mongoose.Schema.Types.Mixed],
+  flashcards: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: [],
+  },
+  hasFlashcards: {
+    type: Boolean,
+    default: false,
+  },
+  flashcardsGeneratedAt: {
+    type: Date,
+  },
+  quiz: [mongoose.Schema.Types.Mixed],
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -44,4 +41,4 @@ const NoteSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.models.Note || mongoose.model('Note', NoteSchema); 
+export default mongoose.models.Note || mongoose.model('Note', NoteSchema);
